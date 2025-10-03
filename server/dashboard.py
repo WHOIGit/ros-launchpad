@@ -22,7 +22,17 @@ from fastapi import WebSocket, WebSocketDisconnect
 from yaml_validator import validate_config
 
 from .alerts import send_process_failure_alert, test_alert_system
-from .models import ConfigValidationResult, ProcessInfo, ProcessMetadata, ProcessState
+from .models import (
+    AlertTestResult,
+    ConfigValidationResult,
+    LaunchConfig,
+    LogContentResponse,
+    LogFileInfo,
+    LogFilesResponse,
+    ProcessInfo,
+    ProcessMetadata,
+    ProcessState,
+)
 from .process import ROSPRocess
 
 logger = logging.getLogger(__name__)
@@ -126,7 +136,7 @@ class LaunchpadServer:
         self.processes: Dict[str, ROSPRocess] = {}
 
         # Available launch configurations (discovered at runtime)
-        self.launch_configs = {}
+        self.launch_configs: Dict[str, LaunchConfig] = {}
 
         # Background monitoring
         self._monitor_task = None
@@ -576,7 +586,7 @@ class LaunchpadServer:
             status[name] = process.get_info()
         return status
 
-    def get_available_log_files(self) -> Dict:
+    def get_available_log_files(self) -> LogFilesResponse:
         """Get list of available log files"""
         # Get log directory from config
         log_dir = self.config.get('launch_args', {}).get('log_dir') if self.config else None
@@ -589,11 +599,11 @@ class LaunchpadServer:
             return {"error": f"Log directory not found: {latest_dir}", "files": []}
 
         try:
-            log_files = []
+            log_files: list[LogFileInfo] = []
             for filename in os.listdir(latest_dir):
                 if filename.endswith('.log'):
                     file_path = os.path.join(latest_dir, filename)
-                    file_info = {
+                    file_info: LogFileInfo = {
                         "name": filename,
                         "path": file_path,
                         "size": os.path.getsize(file_path),
@@ -609,7 +619,7 @@ class LaunchpadServer:
         except (OSError, IOError) as e:
             return {"error": f"Error reading log directory: {str(e)}", "files": []}
 
-    def get_log_file_content(self, filename: str, max_lines: int = 100) -> Dict:
+    def get_log_file_content(self, filename: str, max_lines: int = 100) -> LogContentResponse:
         """Get content of a specific log file"""
         # Get log directory from config
         log_dir = self.config.get('launch_args', {}).get('log_dir') if self.config else None
@@ -743,7 +753,7 @@ class LaunchpadServer:
                 logger.error("Error in process monitor: %s", e)
                 await asyncio.sleep(5)
 
-    async def test_alerts(self) -> dict:
+    async def test_alerts(self) -> AlertTestResult:
         """Test alert system"""
         return await test_alert_system(self.config if self.has_config() else None)
 

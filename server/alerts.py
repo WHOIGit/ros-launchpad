@@ -7,7 +7,10 @@ import logging
 import urllib.error
 import urllib.request
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from .models import AlertTestResult
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +81,7 @@ async def send_test_alert(config: dict) -> None:
                 logger.error("Failed to send alert: %s", e)
 
 
-async def test_alert_system(config: Optional[dict]) -> dict:
+async def test_alert_system(config: Optional[dict]) -> 'AlertTestResult':
     """Test the alert system and return result"""
     if not config:
         return {"success": False, "message": "No config loaded"}

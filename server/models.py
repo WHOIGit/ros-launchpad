@@ -47,3 +47,53 @@ class ProcessData(TypedDict):
     info: ProcessInfo
     metadata: ProcessMetadata
     priority: int
+
+
+class ROSStatus(TypedDict):
+    """ROS connectivity status"""
+    ready: bool
+    message: str
+
+
+class ApiStatusResponse(TypedDict):
+    """Response structure for /api/status endpoint"""
+    processes: dict[str, dict]  # ProcessInfo serialized to dict
+    config_loaded: bool
+    ros_status: ROSStatus
+
+
+class LaunchConfig(TypedDict):
+    """Launch configuration metadata"""
+    filename: str
+    description: str
+    path: str
+
+
+class LogFileInfo(TypedDict):
+    """Log file metadata"""
+    name: str
+    path: str
+    size: int
+    modified: float
+
+
+class LogFilesResponse(TypedDict, total=False):
+    """Response structure for log files API"""
+    log_dir: str
+    files: list[LogFileInfo]
+    error: str
+
+
+class LogContentResponse(TypedDict, total=False):
+    """Response structure for log file content API"""
+    filename: str
+    lines: list[str]
+    total_lines: int
+    file_size: int
+    error: str
+
+
+class AlertTestResult(TypedDict):
+    """Result of alert system test"""
+    success: bool
+    message: str

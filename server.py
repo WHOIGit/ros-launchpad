@@ -21,7 +21,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from server.models import ProcessInfo, ProcessState
+from server.models import ProcessInfo, ProcessState, ApiStatusResponse, ROSStatus, ProcessData
 from server.dashboard import LaunchpadServer, _check_ros_connectivity
 
 # Setup logging
@@ -81,18 +81,19 @@ async def get_dashboard():
 # API Endpoints
 
 @app.get("/api/status")
-async def api_status():
+async def api_status() -> ApiStatusResponse:
     """Get status of all processes"""
     status = await server.get_status()
+    ros_ready, ros_message = _check_ros_connectivity()
     return {
         "processes": {name: info.dict() for name, info in status.items()},
         "config_loaded": server.has_config(),
-        "ros_status": {"ready": _check_ros_connectivity()[0], "message": _check_ros_connectivity()[1]}
+        "ros_status": {"ready": ros_ready, "message": ros_message}
     }
 
 
 @app.get("/api/launch_configs")
-async def api_launch_configs():
+async def api_launch_configs() -> dict[str, dict]:
     """Get available launch configurations"""
     return server.launch_configs
 
@@ -130,7 +131,7 @@ async def api_render_processes():
     ''')
 
     # Get all available processes and their metadata
-    all_processes = {}
+    all_processes: dict[str, ProcessData] = {}
 
     # Add core system processes
     for name in ['roscore', 'rosbag']:
@@ -395,7 +396,7 @@ async def api_load_config_from_url(request_data: dict):
 
 
 @app.post("/api/alerts/test", response_class=HTMLResponse)
-async def api_test_alerts():
+async def api_test_alerts() -> HTMLResponse:
     """Test alert system"""
     test_result = await server.test_alerts()
 
