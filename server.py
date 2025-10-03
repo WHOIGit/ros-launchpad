@@ -15,7 +15,7 @@ import os
 
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -93,7 +93,7 @@ async def api_status() -> ApiStatusResponse:
 
 
 @app.get("/api/launch_configs")
-async def api_launch_configs() -> dict[str, dict]:
+async def api_launch_configs() -> Dict[str, dict]:
     """Get available launch configurations"""
     return server.launch_configs
 
@@ -131,7 +131,7 @@ async def api_render_processes():
     ''')
 
     # Get all available processes and their metadata
-    all_processes: dict[str, ProcessData] = {}
+    all_processes: Dict[str, ProcessData] = {}
 
     # Add core system processes
     for name in ['roscore', 'rosbag']:

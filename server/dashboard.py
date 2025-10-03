@@ -599,7 +599,7 @@ class LaunchpadServer:
             return {"error": f"Log directory not found: {latest_dir}", "files": []}
 
         try:
-            log_files: list[LogFileInfo] = []
+            log_files: List[LogFileInfo] = []
             for filename in os.listdir(latest_dir):
                 if filename.endswith('.log'):
                     file_path = os.path.join(latest_dir, filename)

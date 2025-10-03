@@ -4,7 +4,7 @@ Data models and enums for ROS Launchpad
 
 from datetime import datetime
 from enum import Enum
-from typing import Literal, Optional, TypedDict
+from typing import Dict, List, Literal, Optional, TypedDict
 
 from pydantic import BaseModel, ConfigDict
 
@@ -29,8 +29,8 @@ class ProcessInfo(BaseModel):
 
 class ConfigValidationResult(BaseModel):
     valid: bool
-    errors: list[str] = []
-    warnings: list[str] = []
+    errors: List[str] = []
+    warnings: List[str] = []
 
 
 class ProcessMetadata(TypedDict, total=False):
@@ -57,7 +57,7 @@ class ROSStatus(TypedDict):
 
 class ApiStatusResponse(TypedDict):
     """Response structure for /api/status endpoint"""
-    processes: dict[str, dict]  # ProcessInfo serialized to dict
+    processes: Dict[str, dict]  # ProcessInfo serialized to dict
     config_loaded: bool
     ros_status: ROSStatus
 
@@ -80,14 +80,14 @@ class LogFileInfo(TypedDict):
 class LogFilesResponse(TypedDict, total=False):
     """Response structure for log files API"""
     log_dir: str
-    files: list[LogFileInfo]
+    files: List[LogFileInfo]
     error: str
 
 
 class LogContentResponse(TypedDict, total=False):
     """Response structure for log file content API"""
     filename: str
-    lines: list[str]
+    lines: List[str]
     total_lines: int
     file_size: int
     error: str
