@@ -108,7 +108,9 @@ class LaunchpadServer:
                    self,
                     config_file_path: Optional[str] = None,
                     config_schema: str = None,
-                    auto_start_processes: Optional[str] = None
+                    auto_start_processes: Optional[str] = None,
+                    package_name: Optional[str] = None,
+                    launch_dir: Optional[str] = None
                 ):
         self.config_file = config_file_path
         self.config_schema = config_schema or "./configs/example.yaml"
@@ -117,6 +119,8 @@ class LaunchpadServer:
         self.env = None
         self.config_loaded = False  # Track if config is properly loaded
         self.auto_start_processes = auto_start_processes  # Comma-separated list of processes to auto-start
+        self.package_name = package_name  # ROS package name for launch files
+        self.launch_dir = launch_dir  # Optional: direct path to launch directory
 
         # Process registry
         self.processes: Dict[str, ROSPRocess] = {}
@@ -306,14 +310,23 @@ class LaunchpadServer:
 
     def _discover_launch_files(self):
         """Discover available launch files in the provided package"""
-        parent_dir = os.path.dirname(os.path.dirname(__file__))
-        launch_dir = os.path.join(parent_dir, 'src', 'phyto_arm', 'launch')
-
-        if not os.path.exists(launch_dir):
-            logger.warning("Launch directory not found: %s", launch_dir)
+        # Determine launch directory
+        if self.launch_dir:
+            # Use explicitly provided launch directory
+            launch_directory = self.launch_dir
+        elif self.package_name:
+            # Construct path from package name
+            parent_dir = os.path.dirname(os.path.dirname(__file__))
+            launch_directory = os.path.join(parent_dir, 'src', self.package_name, 'launch')
+        else:
+            logger.warning("No package name or launch directory specified - skipping launch file discovery")
             return
 
-        launch_files = glob.glob(os.path.join(launch_dir, '*.launch'))
+        if not os.path.exists(launch_directory):
+            logger.warning("Launch directory not found: %s", launch_directory)
+            return
+
+        launch_files = glob.glob(os.path.join(launch_directory, '*.launch'))
 
         for launch_file in launch_files:
             filename = os.path.basename(launch_file)
@@ -511,7 +524,10 @@ class LaunchpadServer:
                 env=env
             )
         elif process_name == "rosbag":
-            command = self._build_roslaunch_command('phyto_arm', 'rosbag.launch')
+            if not self.package_name:
+                logger.error("Cannot start rosbag: no package name configured")
+                return False
+            command = self._build_roslaunch_command(self.package_name, 'rosbag.launch')
             process = ROSPRocess(
                 name="rosbag",
                 command=command,
@@ -519,9 +535,12 @@ class LaunchpadServer:
                 dont_kill=True  # Don't kill rosbag forcefully
             )
         elif process_name in self.launch_configs:
+            if not self.package_name:
+                logger.error("Cannot start %s: no package name configured", process_name)
+                return False
             config = self.launch_configs[process_name]
             launchfile = config['filename'] if isinstance(config, dict) else config
-            command = self._build_roslaunch_command('phyto_arm', launchfile)
+            command = self._build_roslaunch_command(self.package_name, launchfile)
             process = ROSPRocess(
                 name=process_name,
                 command=command,

@@ -42,7 +42,14 @@ async def lifespan(fastapi_app: FastAPI):
     global server
     config_file_path = os.environ.get('ROS_YAML_CONFIG')  # Optional now
     auto_start_processes = os.environ.get('LAUNCHPAD_AUTO_START')  # Optional auto-start
-    server = LaunchpadServer(config_file_path, auto_start_processes=auto_start_processes)
+    package_name = os.environ.get('LAUNCHPAD_PACKAGE')  # ROS package name
+    launch_dir = os.environ.get('LAUNCHPAD_LAUNCH_DIR')  # Direct launch directory path
+    server = LaunchpadServer(
+        config_file_path,
+        auto_start_processes=auto_start_processes,
+        package_name=package_name,
+        launch_dir=launch_dir
+    )
     await server.initialize()
 
     yield
@@ -517,6 +524,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ROS Launchpad")
     parser.add_argument("config", nargs="?", help="Config file path (optional)")
     parser.add_argument("--start", type=str, help="Comma-separated list to auto-start (e.g. main,arm_ifcb)")
+    parser.add_argument("--package", type=str, help="ROS package name for launch file discovery")
+    parser.add_argument("--launch-dir", type=str, help="Direct path to launch files directory")
     parser.add_argument("--port", type=int, default=8080, help="Server port (default: 8080)")
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Server host (default: 0.0.0.0)")
 
@@ -538,6 +547,18 @@ if __name__ == "__main__":
     if args.start:
         os.environ['LAUNCHPAD_AUTO_START'] = args.start
         logger.info("Auto-start processes: %s", args.start)
+
+    # Set package name if specified
+    if args.package:
+        os.environ['LAUNCHPAD_PACKAGE'] = args.package
+        logger.info("Using ROS package: %s", args.package)
+    elif not os.environ.get('LAUNCHPAD_PACKAGE'):
+        logger.warning("No package name specified - launch file discovery will be skipped")
+
+    # Set launch directory if specified
+    if args.launch_dir:
+        os.environ['LAUNCHPAD_LAUNCH_DIR'] = args.launch_dir
+        logger.info("Using launch directory: %s", args.launch_dir)
 
     uvicorn.run(
         app,
