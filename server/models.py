@@ -4,12 +4,9 @@ Data models and enums for ROS Launchpad
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
-try:
-    from pydantic.v1 import BaseModel
-except ImportError:
-    from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ProcessState(Enum):
@@ -32,5 +29,5 @@ class ProcessInfo(BaseModel):
 
 class ConfigValidationResult(BaseModel):
     valid: bool
-    errors: List[str] = []
-    warnings: List[str] = []
+    errors: list[str] = []
+    warnings: list[str] = []
