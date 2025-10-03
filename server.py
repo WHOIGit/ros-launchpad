@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PhytO-ARM Control Server - Modern web interface for managing PhytO-ARM ROS processes
+ROS Launchpad - Crude web interface for managing ROS processes
 
 Enhanced version with:
 - Tailwind CSS for modern styling
@@ -21,7 +21,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from server.models import ProcessInfo, ProcessState
-from server.dashboard import PhytoARMServer, _check_ros_connectivity
+from server.dashboard import LaunchpadServer, _check_ros_connectivity
 
 # Setup logging
 logging.basicConfig(
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global server instance
-server: Optional[PhytoARMServer] = None
+server: Optional[LaunchpadServer] = None
 
 
 @asynccontextmanager
@@ -42,7 +42,7 @@ async def lifespan(fastapi_app: FastAPI):
     global server
     config_file_path = os.environ.get('PHYTO_ARM_CONFIG')  # Optional now
     auto_start_processes = os.environ.get('PHYTO_ARM_AUTO_START')  # Optional auto-start
-    server = PhytoARMServer(config_file_path, auto_start_processes=auto_start_processes)
+    server = LaunchpadServer(config_file_path, auto_start_processes=auto_start_processes)
     await server.initialize()
 
     yield
@@ -53,7 +53,7 @@ async def lifespan(fastapi_app: FastAPI):
 
 
 # FastAPI app
-app = FastAPI(title="PhytO-ARM Control Interface", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="ROS Launchpad", version="1.0.0", lifespan=lifespan)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -514,7 +514,7 @@ if __name__ == "__main__":
     import uvicorn
 
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description="PhytO-ARM Control Server")
+    parser = argparse.ArgumentParser(description="ROS Launchpad")
     parser.add_argument("config", nargs="?", help="Config file path (optional)")
     parser.add_argument("--start", type=str, help="Comma-separated list to auto-start (e.g. main,arm_ifcb)")
     parser.add_argument("--port", type=int, default=8080, help="Server port (default: 8080)")
@@ -528,11 +528,11 @@ if __name__ == "__main__":
     # Set environment variables for app startup
     if main_config_file:
         os.environ['PHYTO_ARM_CONFIG'] = main_config_file
-        logger.info("Starting PhytO-ARM Control Server with config: %s", main_config_file)
+        logger.info("Starting ROS Launchpad with config: %s", main_config_file)
     else:
         # Remove the env var if it exists
         os.environ.pop('PHYTO_ARM_CONFIG', None)
-        logger.info("Starting PhytO-ARM Control Server without config - config must be loaded via web interface")
+        logger.info("Starting ROS Launchpad without config - config must be loaded via web interface")
 
     # Set auto-start processes if specified
     if args.start:

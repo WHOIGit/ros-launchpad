@@ -1,5 +1,5 @@
 """
-PhytO-ARM Server - Main server class that manages all PhytO-ARM processes
+ROS Launchpad - Main server class that manages all ROS processes
 """
 
 import asyncio
@@ -23,7 +23,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from scripts.config_validation import validate_config
 
 from .models import ConfigValidationResult, ProcessInfo, ProcessState
-from .process import PhytoARMProcess
+from .process import ROSPRocess
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +101,8 @@ async def _wait_for_roscore_and_apply_config(server_instance, max_wait_seconds: 
     logger.warning("Roscore did not become ready within %d seconds", max_wait_seconds)
 
 
-class PhytoARMServer:
-    """Main server class that manages all PhytO-ARM processes"""
+class LaunchpadServer:
+    """Main server class that manages all ROS processes"""
 
     def __init__(
                    self,
@@ -119,7 +119,7 @@ class PhytoARMServer:
         self.auto_start_processes = auto_start_processes  # Comma-separated list of processes to auto-start
 
         # Process registry
-        self.processes: Dict[str, PhytoARMProcess] = {}
+        self.processes: Dict[str, ROSPRocess] = {}
 
         # Available launch configurations (discovered at runtime)
         self.launch_configs = {}
@@ -146,7 +146,7 @@ class PhytoARMServer:
             # Create basic environment for roscore (no config needed)
             env = os.environ.copy()
 
-            process = PhytoARMProcess(
+            process = ROSPRocess(
                 name="roscore",
                 command="roscore",
                 env=env
@@ -188,7 +188,7 @@ class PhytoARMServer:
             if self.auto_start_processes:
                 await self._auto_start_processes()
 
-            logger.info("PhytO-ARM server initialized successfully")
+            logger.info("ROS Launchpad initialized successfully")
 
         except (OSError, yaml.YAMLError, ValueError) as e:
             logger.error("Failed to initialize server: %s", e)
@@ -305,7 +305,7 @@ class PhytoARMServer:
                 logger.error("Failed to auto-start process %s", process_name)
 
     def _discover_launch_files(self):
-        """Discover available launch files in the phyto_arm package"""
+        """Discover available launch files in the provided package"""
         parent_dir = os.path.dirname(os.path.dirname(__file__))
         launch_dir = os.path.join(parent_dir, 'src', 'phyto_arm', 'launch')
 
@@ -425,7 +425,7 @@ class PhytoARMServer:
         return "other"
 
     def _prep_environment(self) -> Dict[str, str]:
-        """Prepare ROS environment - adapted from original phyto-arm script"""
+        """Prepare ROS environment"""
         parent_dir = os.path.dirname(os.path.dirname(__file__))
         setup_dir = os.path.abspath(os.path.join(parent_dir, 'devel'))
 
@@ -505,14 +505,14 @@ class PhytoARMServer:
         if process_name == "roscore":
             # Use basic environment for roscore (no config dependency)
             env = self.env if self.env else os.environ.copy()
-            process = PhytoARMProcess(
+            process = ROSPRocess(
                 name="roscore",
                 command="roscore",
                 env=env
             )
         elif process_name == "rosbag":
             command = self._build_roslaunch_command('phyto_arm', 'rosbag.launch')
-            process = PhytoARMProcess(
+            process = ROSPRocess(
                 name="rosbag",
                 command=command,
                 env=self.env,
@@ -522,7 +522,7 @@ class PhytoARMServer:
             config = self.launch_configs[process_name]
             launchfile = config['filename'] if isinstance(config, dict) else config
             command = self._build_roslaunch_command('phyto_arm', launchfile)
-            process = PhytoARMProcess(
+            process = ROSPRocess(
                 name=process_name,
                 command=command,
                 env=self.env
@@ -744,11 +744,11 @@ class PhytoARMServer:
                     if test_mode:
                         time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         message = {
-                            'text': f'🧪 *PhytO-ARM Alert Test*\n - {deploy_str}\n - Test Time: {time_str}'
+                            'text': f'🧪 *Alert Test*\n - {deploy_str}\n - Test Time: {time_str}'
                         }
                     else:
                         message = {
-                            'text': f'*PhytO-ARM process failed*\n - {deploy_str}\n - Process: _{process_name}_'
+                            'text': f'*Process failed*\n - {deploy_str}\n - Process: _{process_name}_'
                         }
 
                     urllib.request.urlopen(
@@ -861,7 +861,7 @@ class PhytoARMServer:
 
     async def shutdown(self):
         """Gracefully shutdown all processes"""
-        logger.info("Shutting down PhytO-ARM server")
+        logger.info("Shutting down ROS")
         self._shutdown = True
 
         if self._monitor_task:
@@ -881,4 +881,4 @@ class PhytoARMServer:
 
         # Note: Temporary config files are automatically cleaned up when processes stop
 
-        logger.info("PhytO-ARM server shutdown complete")
+        logger.info("ROS Launchpad shutdown complete")

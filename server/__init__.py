@@ -1,17 +1,17 @@
 """
-PhytO-ARM Server Package
+ROS Launchpad
 
-Modular server components for managing PhytO-ARM ROS processes.
+Modular server components for managing ROS processes.
 """
 
 from .models import ProcessState, ProcessInfo, ConfigValidationResult
-from .process import PhytoARMProcess
-from .dashboard import PhytoARMServer
+from .process import ROSPRocess
+from .dashboard import LaunchpadServer
 
 __all__ = [
     'ProcessState',
     'ProcessInfo',
     'ConfigValidationResult',
-    'PhytoARMProcess',
-    'PhytoARMServer'
+    'ROSPRocess',
+    'LaunchpadServer'
 ]

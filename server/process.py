@@ -1,5 +1,5 @@
 """
-PhytO-ARM process management
+ROS process management
 """
 
 import logging
@@ -13,7 +13,7 @@ from .models import ProcessInfo, ProcessState
 logger = logging.getLogger(__name__)
 
 
-class PhytoARMProcess:
+class ROSPRocess:
     """Manages a single ROS process (roscore, rosbag, or launch file)"""
 
     def __init__(self, name: str, command: str, env: Dict[str, str],

@@ -1,5 +1,5 @@
 """
-Data models and enums for PhytO-ARM server
+Data models and enums for ROS Launchpad
 """
 
 from datetime import datetime
