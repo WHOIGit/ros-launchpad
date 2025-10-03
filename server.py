@@ -83,9 +83,6 @@ async def get_dashboard():
 @app.get("/api/status")
 async def api_status():
     """Get status of all processes"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     status = await server.get_status()
     return {
         "processes": {name: info.dict() for name, info in status.items()},
@@ -97,18 +94,12 @@ async def api_status():
 @app.get("/api/launch_configs")
 async def api_launch_configs():
     """Get available launch configurations"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     return server.launch_configs
 
 
 @app.get("/api/processes/render", response_class=HTMLResponse)
 async def api_render_processes():
     """Render processes as HTML for HTMX"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     status = await server.get_status()
     config_loaded = server.has_config()
 
@@ -269,9 +260,6 @@ def _render_process_card(process_info: ProcessInfo, metadata: dict, config_loade
 @app.post("/api/processes/{process_name}/start")
 async def api_start_process(process_name: str):
     """Start a specific process"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     success = await server.start_process(process_name)
     if not success:
         raise HTTPException(status_code=500, detail=f"Failed to start {process_name}")
@@ -283,9 +271,6 @@ async def api_start_process(process_name: str):
 @app.post("/api/processes/{process_name}/stop")
 async def api_stop_process(process_name: str):
     """Stop a specific process"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     success = await server.stop_process(process_name)
     if not success:
         raise HTTPException(status_code=500, detail=f"Failed to stop {process_name}")
@@ -297,9 +282,6 @@ async def api_stop_process(process_name: str):
 @app.get("/api/logs/files", response_class=HTMLResponse)
 async def api_get_log_files():
     """Get list of available log files as HTML"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     data = server.get_available_log_files()
 
     if data.get("error"):
@@ -330,9 +312,6 @@ async def api_get_log_files():
 @app.get("/api/logs/content/{filename}", response_class=HTMLResponse)
 async def api_get_log_content(filename: str, max_lines: int = 200):
     """Get content of a specific log file as HTML"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     data = server.get_log_file_content(filename, max_lines)
 
     if data.get("error"):
@@ -351,9 +330,6 @@ Showing last {len(data['lines'])} lines
 @app.get("/api/config/content", response_class=HTMLResponse)
 async def api_get_config_content():
     """Get config file content as HTML textarea"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     content = server.get_config_content()
 
     # Escape backticks for JavaScript
@@ -376,9 +352,6 @@ async def api_get_config_content():
 @app.post("/api/config/apply")
 async def api_apply_config(request_data: dict):
     """Apply config changes"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     content = request_data.get('content', '')
 
     # Validate first
@@ -406,9 +379,6 @@ async def api_apply_config(request_data: dict):
 @app.post("/api/config/load_url")
 async def api_load_config_from_url(request_data: dict):
     """Load config from URL"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     url = request_data.get('url', '')
     if not url:
         return JSONResponse(content={
@@ -427,9 +397,6 @@ async def api_load_config_from_url(request_data: dict):
 @app.post("/api/alerts/test", response_class=HTMLResponse)
 async def api_test_alerts():
     """Test alert system"""
-    if not server:
-        raise HTTPException(status_code=500, detail="Server not initialized")
-
     test_result = await server.test_alerts()
 
     if test_result["success"]:
@@ -468,11 +435,6 @@ async def api_test_alerts():
 async def websocket_logs(websocket: WebSocket):
     """WebSocket endpoint for real-time log streaming"""
     await websocket.accept()
-
-    if not server:
-        await websocket.close(code=1000)
-        return
-
     await server.add_log_connection(websocket)
 
     try:
