@@ -19,6 +19,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from server.models import ProcessInfo, ProcessState
 from server.dashboard import LaunchpadServer, _check_ros_connectivity
@@ -62,6 +63,9 @@ async def lifespan(fastapi_app: FastAPI):
 # FastAPI app
 app = FastAPI(title="ROS Launchpad", version="1.0.0", lifespan=lifespan)
 
+# Mount static files
+app.mount("/static", StaticFiles(directory="server/lib"), name="static")
+
 
 @app.get("/", response_class=HTMLResponse)
 async def get_dashboard():
@@ -72,25 +76,6 @@ async def get_dashboard():
         return HTMLResponse(content=content)
     except FileNotFoundError:
         return HTMLResponse(content="<h1>Dashboard template not found</h1>", status_code=500)
-
-
-# Static file serving for JS libraries
-@app.get("/static/tailwind-3.4.17.js")
-async def get_tailwind():
-    with open("server/lib/tailwind-3.4.17.js", "r", encoding='utf-8') as f:
-        return HTMLResponse(content=f.read(), media_type="application/javascript")
-
-
-@app.get("/static/htmx-2.0.7.min.js")
-async def get_htmx():
-    with open("server/lib/htmx-2.0.7.min.js", "r", encoding='utf-8') as f:
-        return HTMLResponse(content=f.read(), media_type="application/javascript")
-
-
-@app.get("/static/htmx-ext-ws-2.0.2.js")
-async def get_htmx_ws():
-    with open("server/lib/htmx-ext-ws-2.0.2.js", "r", encoding='utf-8') as f:
-        return HTMLResponse(content=f.read(), media_type="application/javascript")
 
 
 # API Endpoints
