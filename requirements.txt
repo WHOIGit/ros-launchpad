@@ -4,3 +4,4 @@ pydantic_core==2.33.2
 PyYAML==6.0.3
 uvicorn==0.37.0
 yaml-validator==0.2.0
+pytest==8.3.4
