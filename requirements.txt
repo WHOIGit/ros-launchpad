@@ -1,6 +1,5 @@
 fastapi==0.118.0
-pydantic==2.11.9
-pydantic_core==2.33.2
+pydantic==2.10.6
 PyYAML==6.0.3
 uvicorn==0.37.0
 yaml-validator==0.3.0
