@@ -21,7 +21,8 @@ import yaml
 from fastapi import WebSocket, WebSocketDisconnect
 from yaml_validator import validate_config
 
-from .models import ConfigValidationResult, ProcessInfo, ProcessState
+from .alerts import send_process_failure_alert, test_alert_system
+from .models import ConfigValidationResult, ProcessInfo, ProcessMetadata, ProcessState
 from .process import ROSPRocess
 
 logger = logging.getLogger(__name__)
@@ -381,7 +382,7 @@ class LaunchpadServer:
             name = os.path.splitext(filename)[0]
             return f"Launch configuration: {name}"
 
-    def get_process_metadata(self, process_name: str) -> dict:
+    def get_process_metadata(self, process_name: str) -> ProcessMetadata:
         """Get metadata for a process including description and type"""
         # Core system processes
         if process_name == "roscore":
@@ -734,7 +735,7 @@ class LaunchpadServer:
                         logger.error("Process %s has failed", name)
 
                         # Send alerts if configured
-                        await self._send_alerts(name)
+                        await send_process_failure_alert(self.config, name)
 
                 await asyncio.sleep(5)  # Check every 5 seconds
 
@@ -742,59 +743,9 @@ class LaunchpadServer:
                 logger.error("Error in process monitor: %s", e)
                 await asyncio.sleep(5)
 
-    async def _send_alerts(self, process_name: str, test_mode: bool = False):
-        """Send alerts when process fails - adapted from original"""
-        if not self.config:
-            logger.warning("No config loaded, cannot send alerts")
-            return
-
-        alerts = self.config.get('alerts', [])
-        deployment = self.config.get('name', 'unknown')
-
-        if not alerts:
-            logger.info("No alerts configured")
-            return
-
-        for alert in alerts:
-            if alert.get('type') == 'slack' and alert.get('url'):
-                try:
-                    deploy_str = f"Deployment: _{deployment}_"
-                    if test_mode:
-                        time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        message = {
-                            'text': f'🧪 *Alert Test*\n - {deploy_str}\n - Test Time: {time_str}'
-                        }
-                    else:
-                        message = {
-                            'text': f'*Process failed*\n - {deploy_str}\n - Process: _{process_name}_'
-                        }
-
-                    urllib.request.urlopen(
-                        alert['url'],
-                        json.dumps(message).encode()
-                    )
-
-                    if test_mode:
-                        logger.info("Test alert sent successfully")
-                    else:
-                        logger.info("Alert sent for %s", process_name)
-                except (urllib.error.URLError, OSError, ValueError) as e:
-                    logger.error("Failed to send alert: %s", e)
-
     async def test_alerts(self) -> dict:
         """Test alert system"""
-        if not self.has_config():
-            return {"success": False, "message": "No config loaded"}
-
-        alerts = self.config.get('alerts', [])
-        if not alerts:
-            return {"success": False, "message": "No alerts configured"}
-
-        try:
-            await self._send_alerts("test", test_mode=True)
-            return {"success": True, "message": "Test alert sent successfully"}
-        except (urllib.error.URLError, OSError, ValueError) as e:
-            return {"success": False, "message": f"Failed to send test alert: {str(e)}"}
+        return await test_alert_system(self.config if self.has_config() else None)
 
     async def add_log_connection(self, websocket: WebSocket, log_filename: str = None):
         """Add a WebSocket connection for log streaming"""
