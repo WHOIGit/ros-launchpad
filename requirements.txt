@@ -4,3 +4,4 @@ PyYAML==6.0.3
 uvicorn==0.33.0
 yaml-validator==0.3.0
 pytest==8.3.4
+typing-extensions>=4.0.0

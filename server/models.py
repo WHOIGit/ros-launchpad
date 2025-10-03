@@ -4,9 +4,10 @@ Data models and enums for ROS Launchpad
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Literal, Optional, TypedDict
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict
+from typing_extensions import Literal, TypedDict
 
 
 class ProcessState(Enum):
