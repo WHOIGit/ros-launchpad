@@ -40,8 +40,8 @@ server: Optional[LaunchpadServer] = None
 async def lifespan(fastapi_app: FastAPI):
     # Startup
     global server
-    config_file_path = os.environ.get('PHYTO_ARM_CONFIG')  # Optional now
-    auto_start_processes = os.environ.get('PHYTO_ARM_AUTO_START')  # Optional auto-start
+    config_file_path = os.environ.get('ROS_YAML_CONFIG')  # Optional now
+    auto_start_processes = os.environ.get('LAUNCHPAD_AUTO_START')  # Optional auto-start
     server = LaunchpadServer(config_file_path, auto_start_processes=auto_start_processes)
     await server.initialize()
 
@@ -523,20 +523,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Get config file from arguments or environment (optional now)
-    main_config_file = args.config or os.environ.get('PHYTO_ARM_CONFIG')
+    main_config_file = args.config or os.environ.get('ROS_YAML_CONFIG')
 
     # Set environment variables for app startup
     if main_config_file:
-        os.environ['PHYTO_ARM_CONFIG'] = main_config_file
+        os.environ['ROS_YAML_CONFIG'] = main_config_file
         logger.info("Starting ROS Launchpad with config: %s", main_config_file)
     else:
         # Remove the env var if it exists
-        os.environ.pop('PHYTO_ARM_CONFIG', None)
+        os.environ.pop('ROS_YAML_CONFIG', None)
         logger.info("Starting ROS Launchpad without config - config must be loaded via web interface")
 
     # Set auto-start processes if specified
     if args.start:
-        os.environ['PHYTO_ARM_AUTO_START'] = args.start
+        os.environ['LAUNCHPAD_AUTO_START'] = args.start
         logger.info("Auto-start processes: %s", args.start)
 
     uvicorn.run(

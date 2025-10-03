@@ -458,7 +458,7 @@ class LaunchpadServer:
 
         try:
             # Create temporary file with current config
-            fd, temp_path = tempfile.mkstemp(suffix='.yaml', prefix='phyto_arm_launch_')
+            fd, temp_path = tempfile.mkstemp(suffix='.yaml', prefix='ros_launchpad_')
             with os.fdopen(fd, 'w') as f:
                 # Use preserved formatting if available, otherwise dump current config
                 content = self.config_content if self.config_content else yaml.dump(self.config)
