@@ -17,10 +17,9 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 import yaml
-from fastapi import WebSocket, WebSocketDisconnect
 
-# PyLint thinks this is a first party import
-from scripts.config_validation import validate_config
+from fastapi import WebSocket, WebSocketDisconnect
+from yaml_validator import validate_config
 
 from .models import ConfigValidationResult, ProcessInfo, ProcessState
 from .process import ROSPRocess
