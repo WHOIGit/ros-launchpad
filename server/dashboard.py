@@ -123,7 +123,7 @@ class LaunchpadServer:
                     launch_dir: Optional[str] = None
                 ):
         self.config_file = config_file_path
-        self.config_schema = config_schema or "./configs/example.yaml"
+        self.config_schema = config_schema
         self.config = None
         self.config_content = None  # Store YAML text with formatting
         self.env = None
@@ -232,6 +232,8 @@ class LaunchpadServer:
         try:
             # Validate config
             logger.info("Validating config file %s", config_path)
+            if not self.config_schema:
+                raise ValueError("Config schema is required for validation but was not provided")
             if not validate_config(config_path, self.config_schema):
                 raise ValueError("Config validation failed")
 

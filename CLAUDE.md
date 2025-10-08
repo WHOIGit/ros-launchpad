@@ -30,6 +30,11 @@ python3 server.py --package my_robot_pkg
 python3 server.py path/to/config.yaml --package my_robot_pkg
 ```
 
+**With config file and schema validation:**
+```bash
+python3 server.py path/to/config.yaml --schema path/to/schema.yaml --package my_robot_pkg
+```
+
 **With direct launch directory path:**
 ```bash
 python3 server.py --launch-dir /path/to/launch/files
@@ -48,6 +53,7 @@ python3 server.py --package my_robot_pkg --host 0.0.0.0 --port 8080
 **Using environment variables:**
 ```bash
 export ROS_YAML_CONFIG=path/to/config.yaml
+export LAUNCHPAD_CONFIG_SCHEMA=path/to/schema.yaml
 export LAUNCHPAD_AUTO_START=roscore,main
 export LAUNCHPAD_PACKAGE=my_robot_pkg
 # OR use direct launch directory:
@@ -125,6 +131,7 @@ The system manages three categories of processes:
 ## Environment Variables
 
 - `ROS_YAML_CONFIG`: Path to YAML configuration file (optional)
+- `LAUNCHPAD_CONFIG_SCHEMA`: Path to YAML schema file for config validation (optional)
 - `LAUNCHPAD_AUTO_START`: Comma-separated list of processes to auto-start (optional)
 - `LAUNCHPAD_PACKAGE`: ROS package name for launch file discovery (optional, but recommended)
 - `LAUNCHPAD_LAUNCH_DIR`: Direct path to launch files directory (optional, alternative to package name)

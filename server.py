@@ -42,11 +42,13 @@ async def lifespan(fastapi_app: FastAPI):
     # Startup
     global server
     config_file_path = os.environ.get('ROS_YAML_CONFIG')  # Optional now
+    config_schema = os.environ.get('LAUNCHPAD_CONFIG_SCHEMA')  # Optional config schema
     auto_start_processes = os.environ.get('LAUNCHPAD_AUTO_START')  # Optional auto-start
     package_name = os.environ.get('LAUNCHPAD_PACKAGE')  # ROS package name
     launch_dir = os.environ.get('LAUNCHPAD_LAUNCH_DIR')  # Direct launch directory path
     server = LaunchpadServer(
         config_file_path,
+        config_schema=config_schema,
         auto_start_processes=auto_start_processes,
         package_name=package_name,
         launch_dir=launch_dir
@@ -470,7 +472,8 @@ if __name__ == "__main__":
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="ROS Launchpad")
-    parser.add_argument("config", nargs="?", help="Config file path (optional)")
+    parser.add_argument("schema", required=True, type=str, help="Config schema file path for validation")
+    parser.add_argument("--config", help="Config file path (optional)")
     parser.add_argument("--start", type=str, help="Comma-separated list to auto-start (e.g. main,arm_ifcb)")
     parser.add_argument("--package", type=str, help="ROS package name for launch file discovery")
     parser.add_argument("--launch-dir", type=str, help="Direct path to launch files directory")
@@ -490,6 +493,11 @@ if __name__ == "__main__":
         # Remove the env var if it exists
         os.environ.pop('ROS_YAML_CONFIG', None)
         logger.info("Starting ROS Launchpad without config - config must be loaded via web interface")
+
+    # Set config schema if specified
+    if args.schema:
+        os.environ['LAUNCHPAD_CONFIG_SCHEMA'] = args.schema
+        logger.info("Using config schema: %s", args.schema)
 
     # Set auto-start processes if specified
     if args.start:
