@@ -146,6 +146,9 @@ class LaunchpadServer:
         self.log_file_monitors: Dict[str, asyncio.Task] = {}
         self.log_file_positions: Dict[str, int] = {}
 
+        # Track which processes have been alerted about
+        self._alerted_failures: set = set()
+
 
     def _is_process_running(self, process_name: str) -> bool:
         """Check if a process is currently running"""
@@ -518,6 +521,9 @@ class LaunchpadServer:
     async def start_process(self, process_name: str) -> bool:
         """Start a specific process"""
 
+        # Clear failure alert tracking when starting/restarting a process
+        self._alerted_failures.discard(process_name)
+
         if process_name in self.processes:
             return self.processes[process_name].start()
 
@@ -740,10 +746,13 @@ class LaunchpadServer:
                 for name, process in list(self.processes.items()):
                     # Check if process failed
                     if not process.is_running() and process.info.state == ProcessState.FAILED:
-                        logger.error("Process %s has failed", name)
-
-                        # Send alerts if configured
-                        await send_process_failure_alert(self.config, name)
+                        # Only alert once per failure
+                        if name not in self._alerted_failures:
+                            logger.error("Process %s has failed", name)
+                            # Send alerts if configured
+                            await send_process_failure_alert(self.config, name)
+                            # Mark as alerted
+                            self._alerted_failures.add(name)
 
                 await asyncio.sleep(5)  # Check every 5 seconds
 

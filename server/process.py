@@ -40,10 +40,7 @@ class ROSPRocess:
             self.process = subprocess.Popen(
                 self.command,
                 shell=True,
-                env=self.env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True
+                env=self.env
             )
 
             self.info.pid = self.process.pid
