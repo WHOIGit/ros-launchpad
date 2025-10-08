@@ -13,7 +13,6 @@ import subprocess
 import tempfile
 import urllib.error
 import urllib.request
-from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 import yaml
@@ -450,15 +449,12 @@ class LaunchpadServer:
         return "other"
 
     def _prep_environment(self) -> Dict[str, str]:
-        """Prepare ROS environment"""
+        """Prepare environment"""
         parent_dir = os.path.dirname(os.path.dirname(__file__))
-        setup_dir = os.path.abspath(os.path.join(parent_dir, 'devel'))
-
         env = os.environ.copy()
-        env['_CATKIN_SETUP_DIR'] = setup_dir
 
         # Build command to load workspace
-        command = f'. {shlex.quote(setup_dir)}/setup.sh && env'
+        command = 'env'
 
         if os.getenv('NO_VIRTUALENV') is None:
             command = f'. {shlex.quote(parent_dir)}/.venv/bin/activate && ' + command

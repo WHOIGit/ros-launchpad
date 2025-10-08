@@ -21,7 +21,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from server.models import ProcessInfo, ProcessState, ApiStatusResponse, ROSStatus, ProcessData
+from server.models import ProcessInfo, ProcessState, ApiStatusResponse, ProcessData
 from server.dashboard import LaunchpadServer, _check_ros_connectivity
 
 # Setup logging
