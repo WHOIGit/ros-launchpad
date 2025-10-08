@@ -472,7 +472,7 @@ if __name__ == "__main__":
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="ROS Launchpad")
-    parser.add_argument("schema", required=True, type=str, help="Config schema file path for validation")
+    parser.add_argument("schema", type=str, help="Config schema file path for validation")
     parser.add_argument("--config", help="Config file path (optional)")
     parser.add_argument("--start", type=str, help="Comma-separated list to auto-start (e.g. main,arm_ifcb)")
     parser.add_argument("--package", type=str, help="ROS package name for launch file discovery")
