@@ -329,28 +329,52 @@ class LaunchpadServer:
             # Use explicitly provided launch directory
             launch_directory = self.launch_dir
         elif self.package_name:
-            # Use rospack to find the package
-            try:
-                # Use prepared environment if available, otherwise use current env
-                env = self.env if self.env else os.environ.copy()
+            # Use rospack to find the package (with retry for startup race conditions)
+            package_path = None
+            max_retries = 3
+            retry_delay = 1.0
 
-                result = subprocess.run(
-                    ['rospack', 'find', self.package_name],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                    timeout=5,
-                    env=env
-                )
-                package_path = result.stdout.strip()
-                launch_directory = os.path.join(package_path, 'launch')
-                logger.info("Found package '%s' at: %s", self.package_name, package_path)
-            except subprocess.CalledProcessError:
-                logger.error("Package '%s' not found in ROS_PACKAGE_PATH", self.package_name)
-                raise ValueError(f"Package '{self.package_name}' not found in ROS_PACKAGE_PATH")
-            except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
-                logger.error("Failed to run rospack: %s", e)
-                raise
+            for attempt in range(max_retries):
+                try:
+                    # Use prepared environment if available, otherwise use current env
+                    env = self.env if self.env else os.environ.copy()
+
+                    result = subprocess.run(
+                        ['rospack', 'find', self.package_name],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                        timeout=5,
+                        env=env
+                    )
+                    package_path = result.stdout.strip()
+                    launch_directory = os.path.join(package_path, 'launch')
+                    logger.info("Found package '%s' at: %s", self.package_name, package_path)
+                    break
+                except subprocess.CalledProcessError as e:
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            "Package '%s' not found (attempt %d/%d), retrying in %.1fs...",
+                            self.package_name, attempt + 1, max_retries, retry_delay
+                        )
+                        import time
+                        time.sleep(retry_delay)
+                    else:
+                        logger.error("Package '%s' not found in ROS_PACKAGE_PATH after %d attempts",
+                                   self.package_name, max_retries)
+                        raise ValueError(f"Package '{self.package_name}' not found in ROS_PACKAGE_PATH after {max_retries} attempts")
+                except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+                    if attempt < max_retries - 1:
+                        logger.warning("Failed to run rospack (attempt %d/%d): %s, retrying...",
+                                     attempt + 1, max_retries, e)
+                        import time
+                        time.sleep(retry_delay)
+                    else:
+                        logger.error("Failed to run rospack after %d attempts: %s", max_retries, e)
+                        raise
+
+            if not package_path:
+                raise ValueError(f"Failed to locate package '{self.package_name}'")
         else:
             logger.warning("No package name or launch directory specified - skipping launch file discovery")
             return
