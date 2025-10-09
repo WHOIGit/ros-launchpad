@@ -331,22 +331,26 @@ class LaunchpadServer:
         elif self.package_name:
             # Use rospack to find the package
             try:
+                # Use prepared environment if available, otherwise use current env
+                env = self.env if self.env else os.environ.copy()
+
                 result = subprocess.run(
                     ['rospack', 'find', self.package_name],
                     capture_output=True,
                     text=True,
                     check=True,
-                    timeout=5
+                    timeout=5,
+                    env=env
                 )
                 package_path = result.stdout.strip()
                 launch_directory = os.path.join(package_path, 'launch')
                 logger.info("Found package '%s' at: %s", self.package_name, package_path)
             except subprocess.CalledProcessError:
                 logger.error("Package '%s' not found in ROS_PACKAGE_PATH", self.package_name)
-                return
+                raise ValueError(f"Package '{self.package_name}' not found in ROS_PACKAGE_PATH")
             except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
                 logger.error("Failed to run rospack: %s", e)
-                return
+                raise
         else:
             logger.warning("No package name or launch directory specified - skipping launch file discovery")
             return
