@@ -26,7 +26,7 @@ from server.dashboard import LaunchpadServer, _check_ros_connectivity
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ async def lifespan(fastapi_app: FastAPI):
 
 
 # FastAPI app
-app = FastAPI(title="ROS Launchpad", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="ROS Launchpad", version="1.0.1", lifespan=lifespan)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="server/lib"), name="static")

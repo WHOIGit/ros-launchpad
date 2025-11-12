@@ -764,14 +764,23 @@ class LaunchpadServer:
             try:
                 for name, process in list(self.processes.items()):
                     # Check if process failed
-                    if not process.is_running() and process.info.state == ProcessState.FAILED:
+                    is_running = process.is_running()
+                    current_state = process.info.state
+
+                    if not is_running and current_state == ProcessState.FAILED:
                         # Only alert once per failure
                         if name not in self._alerted_failures:
-                            logger.error("Process %s has failed", name)
+                            logger.error("Process %s has failed (exit code: %s)",
+                                       name, process.info.exit_code)
+                            logger.info("Attempting to send failure alert for %s", name)
+                            logger.debug("Config available: %s, Has alerts: %s",
+                                       bool(self.config),
+                                       bool(self.config.get('alerts') if self.config else False))
                             # Send alerts if configured
                             await send_process_failure_alert(self.config, name)
                             # Mark as alerted
                             self._alerted_failures.add(name)
+                            logger.info("Marked %s as alerted", name)
 
                 await asyncio.sleep(5)  # Check every 5 seconds
 

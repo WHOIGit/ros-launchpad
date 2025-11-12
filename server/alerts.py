@@ -20,6 +20,8 @@ async def send_process_failure_alert(
     process_name: str
 ) -> None:
     """Send alert when a process fails"""
+    logger.info("send_process_failure_alert called for process: %s", process_name)
+
     if not config:
         logger.warning("No config loaded, cannot send alerts")
         return
@@ -27,11 +29,15 @@ async def send_process_failure_alert(
     alerts = config.get('alerts', [])
     deployment = config.get('name', 'unknown')
 
+    logger.info("Config has %d alerts configured", len(alerts))
+
     if not alerts:
         logger.info("No alerts configured")
         return
 
     for alert in alerts:
+        logger.debug("Processing alert: type=%s, has_url=%s",
+                    alert.get('type'), bool(alert.get('url')))
         if alert.get('type') == 'slack' and alert.get('url'):
             try:
                 deploy_str = f"Deployment: _{deployment}_"
@@ -39,12 +45,13 @@ async def send_process_failure_alert(
                     'text': f'*Process failed*\n - {deploy_str}\n - Process: _{process_name}_'
                 }
 
+                logger.info("Sending failure alert to Slack for %s", process_name)
                 urllib.request.urlopen(
                     alert['url'],
                     json.dumps(message).encode()
                 )
 
-                logger.info("Alert sent for %s", process_name)
+                logger.info("Alert sent successfully for %s", process_name)
             except (urllib.error.URLError, OSError, ValueError) as e:
                 logger.error("Failed to send alert: %s", e)
 

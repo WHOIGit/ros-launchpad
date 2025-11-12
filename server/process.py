@@ -26,6 +26,7 @@ class ROSPRocess:
 
         self.process: Optional[subprocess.Popen] = None
         self.info = ProcessInfo(name=name, state=ProcessState.STOPPED)
+        self._intentional_stop = False  # Track if stop was user-initiated
 
     def start(self) -> bool:
         """Start the process"""
@@ -35,6 +36,7 @@ class ROSPRocess:
 
         try:
             self.info.state = ProcessState.STARTING
+            self._intentional_stop = False  # Reset flag when starting
             logger.info("Starting %s: %s", self.name, self.command)
 
             self.process = subprocess.Popen(
@@ -63,6 +65,7 @@ class ROSPRocess:
 
         try:
             self.info.state = ProcessState.STOPPING
+            self._intentional_stop = True  # Mark as intentional user-initiated stop
             logger.info("Stopping %s (PID %s)", self.name, self.info.pid)
 
             self.process.terminate()
@@ -100,7 +103,20 @@ class ROSPRocess:
             # Process has terminated
             self.info.exit_code = poll_result
             self.info.stopped_at = datetime.now()
-            self.info.state = ProcessState.STOPPED if poll_result == 0 else ProcessState.FAILED
+
+            # If stop was intentional (user-clicked), mark as STOPPED
+            # Otherwise, mark as FAILED (unexpected termination/crash)
+            if self._intentional_stop:
+                new_state = ProcessState.STOPPED
+                logger.info("Process %s stopped intentionally with exit code %s",
+                           self.name, poll_result)
+            else:
+                # Unexpected termination - treat as failure regardless of exit code
+                new_state = ProcessState.FAILED
+                logger.warning("Process %s terminated unexpectedly with exit code %s, marking as FAILED",
+                             self.name, poll_result)
+
+            self.info.state = new_state
             self.process = None
             return False
 
